@@ -19,6 +19,7 @@ client = gspread.authorize(creds)
 sheet = client.open("Classic Price Bot").worksheet("prices")
 retail_sheet = client.open("Classic Price Bot").worksheet("Retail")
 currency_sheet = client.open("Classic Price Bot").worksheet("Retail")
+albion_sheet = client.open("Classic Price Bot").worksheet("Albion")
 
 def get_prices_multi(region):
     records = currency_sheet.get_all_records()
@@ -178,7 +179,42 @@ class POEView(View):
 class AlbionView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        # Add Albion dropdown/buttons here
+        self.add_item(AlbionDropdown())
+
+class AlbionDropdown(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Europe", emoji="🇪🇺"),
+            discord.SelectOption(label="USA", emoji="🇺🇸"),
+            discord.SelectOption(label="Asia", emoji="🌏")
+        ]
+        super().__init__(placeholder="🛒┋ Albion Silver Price - Click here", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        region = self.values[0].lower()
+        price = None
+
+        if region == "europe":
+            price = albion_sheet.acell("A2").value
+        elif region == "usa":
+            price = albion_sheet.acell("B2").value
+        elif region == "asia":
+            price = albion_sheet.acell("C2").value
+
+        embed = discord.Embed(title=f"Albion Silver Price - {region.title()}", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+
+        if price:
+            embed.add_field(name="PER 1M", value=f"{price}$ USD", inline=False)
+        else:
+            embed.add_field(name="Error", value="Price not found.", inline=False)
+
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.message.edit(view=AlbionView())
+
 
 class ClassicFreshDropdown(Select):
     def __init__(self):
