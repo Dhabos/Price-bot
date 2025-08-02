@@ -17,13 +17,18 @@ scope = [
 creds = ServiceAccountCredentials.from_json_keyfile_name("dhab-price-checker-577277a06251.json", scope)
 client = gspread.authorize(creds)
 sheet = client.open("Classic Price Bot").worksheet("prices")
+retail_sheet = client.open("Classic Price Bot").worksheet("Retail")
+currency_sheet = client.open("Classic Price Bot").worksheet("Retail")
 
-def get_prices(realm, region):
-    records = sheet.get_all_records()
-    prices = {}
+def get_prices_multi(region):
+    records = currency_sheet.get_all_records()
+    prices = []
     for row in records:
-        if row["Realm"].lower() == realm.lower() and row["Region"].upper() == region.upper():
-            prices[row["Faction"]] = row["Price"]
+        amount = row.get(region)
+        currency = row.get("Currency")
+        flag = row.get("FLAG EMOJI")
+        if amount and currency and flag:
+            prices.append(f"{amount} {currency} {flag}")
     return prices
 
 intents = discord.Intents.default()
@@ -85,13 +90,13 @@ class PandariaUSDropdown(Select):
     async def callback(self, interaction: discord.Interaction):
         realm = self.values[0]
         region = "US"
-        results = get_prices(realm, region)
         embed = discord.Embed(title=f"Prices for {realm} (US)", color=EMBED_COLOR)
         embed.set_thumbnail(url=EMBED_THUMBNAIL)
-        for faction in ["Horde", "Alliance"]:
-            price = results.get(faction)
-            if price:
-                embed.add_field(name=f"{faction} {realm}", value=f"{price}$ USD / 1K", inline=False)
+        prices = get_prices_multi("US")
+        for price in prices:
+            embed.add_field(name="US Servers", value=price, inline=False)
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
         await interaction.response.send_message(embed=embed, ephemeral=True)
         await interaction.message.edit(view=PandariaView())
 
@@ -107,13 +112,13 @@ class PandariaEUDropdown(Select):
     async def callback(self, interaction: discord.Interaction):
         realm = self.values[0]
         region = "EU"
-        results = get_prices(realm, region)
         embed = discord.Embed(title=f"Prices for {realm} (EU)", color=EMBED_COLOR)
         embed.set_thumbnail(url=EMBED_THUMBNAIL)
-        for faction in ["Horde", "Alliance"]:
-            price = results.get(faction)
-            if price:
-                embed.add_field(name=f"{faction} {realm}", value=f"{price}$ USD / 1K", inline=False)
+        prices = get_prices_multi("EU")
+        for price in prices:
+            embed.add_field(name="EU Servers", value=price, inline=False)
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
         await interaction.response.send_message(embed=embed, ephemeral=True)
         await interaction.message.edit(view=PandariaView())
 
@@ -124,12 +129,42 @@ class PandariaView(View):
         self.add_item(PandariaUSDropdown())
         self.add_item(PandariaEUDropdown())
 
-# --------- Placeholder Views for Other Games ---------
+# --------- Retail Buttons ---------
 class RetailView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        # Add Retail dropdown/buttons here
+        self.add_item(RetailUSButton())
+        self.add_item(RetailEUButton())
 
+class RetailUSButton(Button):
+    def __init__(self):
+        super().__init__(label="WoW Retail US", style=discord.ButtonStyle.green, emoji="🇺🇸")
+
+    async def callback(self, interaction: discord.Interaction):
+        embed = discord.Embed(title="Price per 100K\nUS Servers", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+        prices = get_prices_multi("US")
+        for price in prices:
+            embed.add_field(name="\u200b", value=price, inline=False)
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+class RetailEUButton(Button):
+    def __init__(self):
+        super().__init__(label="WoW Retail EU", style=discord.ButtonStyle.green, emoji="🇪🇺")
+
+    async def callback(self, interaction: discord.Interaction):
+        embed = discord.Embed(title="Price per 100K\nEU Servers", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+        prices = get_prices_multi("EU")
+        for price in prices:
+            embed.add_field(name="\u200b", value=price, inline=False)
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# --------- Placeholder Views for Other Games ---------
 class RunescapeView(View):
     def __init__(self):
         super().__init__(timeout=None)
