@@ -166,15 +166,67 @@ class RetailEUButton(Button):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 # --------- Placeholder Views for Other Games ---------
+class RunescapeDropdown(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Old School Runescape", emoji="<:OSRS:1400800119879630899>"),
+            discord.SelectOption(label="Runescape 3", emoji="<:rs3:1400800017400205373>")
+        ]
+        super().__init__(placeholder="🛒┋ Runescape Prices - Click here", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        selection = self.values[0].lower()
+        price = None
+        runescape_sheet = client.open("Classic Price Bot").worksheet("Runescape")
+
+        if "old school" in selection:
+            price = runescape_sheet.acell("A2").value
+        elif "runescape 3" in selection:
+            price = runescape_sheet.acell("B2").value
+
+        embed = discord.Embed(title=f"Runescape Price - {selection.title()}", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+
+        if price:
+            embed.add_field(name="PER 1M", value=f"{price}$ USD", inline=False)
+        else:
+            embed.add_field(name="Error", value="Price not found.", inline=False)
+
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.message.edit(view=RunescapeView())
+
 class RunescapeView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        # Add Runescape dropdown/buttons here
+        self.add_item(RunescapeDropdown())
+
+class POEDropdown(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Current League", emoji="🟪"),
+            discord.SelectOption(label="Standard", emoji="🟥"),
+            discord.SelectOption(label="Hardcore", emoji="🟦")
+        ]
+        super().__init__(placeholder="💎┋ POE Price Menu - Click here", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        choice = self.values[0]
+        embed = discord.Embed(
+            title="Path of Exile",
+            description=f"Prices for **{choice}** will be added here next season.",
+            color=EMBED_COLOR
+        )
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+        embed.set_footer(text="Dhab ®")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class POEView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        # Add POE dropdown/buttons here
+        self.add_item(POEDropdown())
 
 class AlbionView(View):
     def __init__(self):
