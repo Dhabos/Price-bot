@@ -180,10 +180,185 @@ class AlbionView(View):
         super().__init__(timeout=None)
         # Add Albion dropdown/buttons here
 
+class ClassicFreshDropdown(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Spineshatter", emoji="🇪🇺"),
+            discord.SelectOption(label="Thunderstrike", emoji="🇪🇺"),
+            discord.SelectOption(label="Nightslayer", emoji="🇺🇸"),
+            discord.SelectOption(label="Dreamscythe", emoji="🇺🇸"),
+            discord.SelectOption(label="Maladath", emoji="🇺🇸")
+        ]
+        super().__init__(placeholder="Classic Fresh Servers", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        realm = self.values[0]
+        region = "US"
+
+        # Row-specific logic for Classic Fresh
+        row_map = {
+            "Spineshatter": (26, 27),
+            "Thunderstrike": (28, 29),
+            "Nightslayer": (20, 21),
+            "Dreamscythe": (22, 23),
+            "Maladath": (24, 25),
+        }
+
+        start_row, end_row = row_map.get(realm, (None, None))
+        records = sheet.get_all_values()[start_row - 1:end_row]
+        embed = discord.Embed(title=f"{realm} - Classic Fresh", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+
+        for row in records:
+            if len(row) >= 8:
+                faction = row[4]  # Column E
+                price = row[7]    # Column H
+                if faction and price:
+                    embed.add_field(name=f"{faction} - {realm}", value=f"{price}$ USD / 1K", inline=False)
+
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.message.edit(view=ClassicWoWView())
+
+class SoDUSDropdown(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Wild Growth", emoji="🇺🇸"),
+            discord.SelectOption(label="Crusader strike", emoji="🇺🇸")
+        ]
+        super().__init__(placeholder="Season of Discovery US", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        realm = self.values[0]
+
+        row_map = {
+            "Wild Growth": (6, 7),
+            "Crusader strike": (8, 9),
+        }
+
+        start_row, end_row = row_map.get(realm, (None, None))
+        records = sheet.get_all_values()[start_row - 1:end_row]
+
+        embed = discord.Embed(title=f"{realm} - SoD US", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+
+        for row in records:
+            if len(row) >= 8:
+                faction = row[4]  # Column E
+                price = row[7]    # Column H
+                if faction and price:
+                    embed.add_field(name=f"{faction} - {realm}", value=f"{price}$ USD / 1K", inline=False)
+
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.message.edit(view=ClassicWoWView())
+
+class SoDEUDropdown(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Living Flame", emoji="🇪🇺"),
+            discord.SelectOption(label="Wild Growth", emoji="🇪🇺")
+        ]
+        super().__init__(placeholder="Season of Discovery EU", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        realm = self.values[0]
+
+        row_map = {
+            "Living Flame": (2, 3),
+            "Wild Growth": (4, 5),
+        }
+
+        start_row, end_row = row_map.get(realm, (None, None))
+        records = sheet.get_all_values()[start_row - 1:end_row]
+
+        embed = discord.Embed(title=f"{realm} - SoD EU", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+
+        for row in records:
+            if len(row) >= 8:
+                faction = row[4]  # Column E
+                price = row[7]    # Column H
+                if faction and price:
+                    embed.add_field(name=f"{faction} - {realm}", value=f"{price}$ USD / 1K", inline=False)
+
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.message.edit(view=ClassicWoWView())
+
+class ClassicERADropdown(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Firemaw", emoji="🇪🇺"),
+            discord.SelectOption(label="Whitemane", emoji="🇺🇸")
+        ]
+        super().__init__(placeholder="Classic ERA Servers", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        realm = self.values[0]
+        region = "EU" if realm == "Firemaw" else "US"
+        results = get_prices(realm, region)
+        embed = discord.Embed(title=f"{realm} - Classic ERA", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+        for faction in ["Horde", "Alliance"]:
+            price = results.get(faction)
+            if price:
+                embed.add_field(name=f"{faction} - {realm}", value=f"{price}$ USD / 1K", inline=False)
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.message.edit(view=ClassicWoWView())
+
+class HardcoreDropdown(Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="DoomHowl", emoji="🇺🇸"),
+            discord.SelectOption(label="Stitches", emoji="🇪🇺"),
+            discord.SelectOption(label="Soulseeker", emoji="🇪🇺")
+        ]
+        super().__init__(placeholder="Hardcore Servers", options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        realm = self.values[0]
+
+        row_map = {
+            "DoomHowl": (16, 17),
+            "Stitches": (10, 11),
+            "Soulseeker": (18, 19),
+        }
+
+        start_row, end_row = row_map.get(realm, (None, None))
+        records = sheet.get_all_values()[start_row - 1:end_row]
+
+        embed = discord.Embed(title=f"{realm} - Hardcore", color=EMBED_COLOR)
+        embed.set_thumbnail(url=EMBED_THUMBNAIL)
+
+        for row in records:
+            if len(row) >= 8:
+                faction = row[4]  # Column E
+                price = row[7]    # Column H
+                if faction and price:
+                    embed.add_field(name=f"{faction} - {realm}", value=f"{price}$ USD / 1K", inline=False)
+
+        embed.add_field(name="Open a ticket:", value="<#1361488242792333392>", inline=False)
+        embed.set_footer(text="Dhab ®")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.message.edit(view=ClassicWoWView())
+
 class ClassicWoWView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        # Add Classic dropdowns here
+        self.add_item(ClassicFreshDropdown())
+        self.add_item(SoDUSDropdown())
+        self.add_item(SoDEUDropdown())
+        self.add_item(ClassicERADropdown())
+        self.add_item(HardcoreDropdown())
 
 # --------- Slash Command ---------
 @bot.tree.command(name="menu", description="Open the price menu for a specific game")
