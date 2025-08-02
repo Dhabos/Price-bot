@@ -30,15 +30,12 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Channel ID mappings for price checkers
-CHANNEL_IDS = {
-    "pandaria": 1400892699627749487,
-    "retail": 1400892488172048596,
-    "classic": 1400543973608653050,
-    "poe": 1400520058161074186,
-    "runescape": 1400520071155023992,
-    "albion": 1400801233471668224,
-}
+@bot.event
+async def on_ready():
+    guild = discord.Object(id=1400517495294525575)
+    await bot.tree.sync(guild=guild)
+    print(f"Synced slash commands to test server: {guild.id}")
+    print(f"Logged in as {bot.user}")
 
 # Embed config
 EMBED_COLOR = 0x9136E0
@@ -48,30 +45,6 @@ GENERIC_DESCRIPTION = (
     "Click here to sell: <#1400825204749635684>\n"
     "Click here to view payment options: <#1400825204749635684>"
 )
-
-@bot.event
-async def on_ready():
-    guild = discord.Object(id=1400517495294525575)
-    await bot.tree.sync(guild=guild)
-    print(f"Synced slash commands to test server: {guild.id}")
-    print(f"Logged in as {bot.user}")
-
-    # Send startup embeds to respective channels
-    for version, channel_id in CHANNEL_IDS.items():
-        view = {
-            "pandaria": PandariaView(),
-            "retail": RetailView(),
-            "classic": ClassicWoWView(),
-            "poe": POEView(),
-            "runescape": RunescapeView(),
-            "albion": AlbionView(),
-        }.get(version)
-        if view:
-            embed = discord.Embed(title=f"Price Checker: {version.title()}", description=GENERIC_DESCRIPTION, color=EMBED_COLOR)
-            embed.set_thumbnail(url=EMBED_THUMBNAIL)
-            embed.set_footer(text="Dhab ®")
-            channel = bot.get_channel(channel_id)
-            await channel.send(embed=embed, view=view)
 
 # --------- Pandaria WoW Dropdowns ---------
 class PandariaUSDropdown(Select):
@@ -86,14 +59,13 @@ class PandariaUSDropdown(Select):
         realm = self.values[0]
         region = "US"
         results = get_prices(realm, region)
-        embed = discord.Embed(title=f"Prices for {realm} (US)", color=EMBED_COLOR)
+        embed = discord.Embed(title=f"Prices for {realm} (US)", description=GENERIC_DESCRIPTION, color=EMBED_COLOR)
         embed.set_thumbnail(url=EMBED_THUMBNAIL)
         for faction in ["Horde", "Alliance"]:
             price = results.get(faction)
             if price:
                 embed.add_field(name=f"{faction} {realm}", value=f"{price}$ USD / 1K", inline=False)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        await interaction.message.edit(view=PandariaView())
+        await interaction.response.edit_message(embed=embed, view=PandariaView())
 
 class PandariaEUDropdown(Select):
     def __init__(self):
@@ -108,14 +80,13 @@ class PandariaEUDropdown(Select):
         realm = self.values[0]
         region = "EU"
         results = get_prices(realm, region)
-        embed = discord.Embed(title=f"Prices for {realm} (EU)", color=EMBED_COLOR)
+        embed = discord.Embed(title=f"Prices for {realm} (EU)", description=GENERIC_DESCRIPTION, color=EMBED_COLOR)
         embed.set_thumbnail(url=EMBED_THUMBNAIL)
         for faction in ["Horde", "Alliance"]:
             price = results.get(faction)
             if price:
                 embed.add_field(name=f"{faction} {realm}", value=f"{price}$ USD / 1K", inline=False)
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-        await interaction.message.edit(view=PandariaView())
+        await interaction.response.edit_message(embed=embed, view=PandariaView())
 
 # --------- Pandaria View ---------
 class PandariaView(View):
@@ -173,7 +144,7 @@ async def menu(interaction: discord.Interaction, version: Literal["pandaria", "r
     elif version == "classic":
         await interaction.response.send_message(embed=embed, view=ClassicWoWView(), ephemeral=False)
     else:
-        await interaction.followup.send("Unknown version. Try: pandaria, retail, runescape, poe, albion, classic", ephemeral=True)
+        await interaction.response.send_message("Unknown version. Try: pandaria, retail, runescape, poe, albion, classic", ephemeral=True)
 
 load_dotenv()
 bot.run(os.getenv("DISCORD_BOT_TOKEN"))
